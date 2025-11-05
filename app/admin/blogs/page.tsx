@@ -1,0 +1,273 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { BlogForm } from "@/components/BlogForm";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Pencil, Trash2, Plus, RotateCcw } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+interface Blog {
+  id: string;
+  title: string;
+  content: string | null;
+  excerpt: string | null;
+  images: any;
+  is_deleted: boolean;
+  created_at: string;
+}
+
+export default function BlogsPage() {
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
+  const [deletingBlogId, setDeletingBlogId] = useState<string | null>(null);
+  const [restoringBlogId, setRestoringBlogId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchBlogs = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/blogs");
+      if (!response.ok) {
+        throw new Error("Failed to fetch blogs");
+      }
+      const result = await response.json();
+      setBlogs(result.data);
+    } catch (error) {
+      console.error("Error fetching blogs:", error);
+    }
+    setIsLoading(false);
+  };
+
+  const handleRestore = async (id: string) => {
+    try {
+      const response = await fetch(`/api/blogs/${id}/restore`, {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to restore blog");
+      }
+
+      setRestoringBlogId(null);
+      fetchBlogs();
+    } catch (error) {
+      console.error("Error restoring blog:", error);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await fetch(`/api/blogs/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete blog");
+      }
+
+      setDeletingBlogId(null);
+      fetchBlogs();
+    } catch (error) {
+      console.error("Error deleting blog:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchBlogs();
+  }, []);
+
+  return (
+    <div className="w-full max-w-screen-xl mx-auto px-4 md:px-6">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">Blogs</h1>
+          <p className="text-gray-600 mt-1">Manage blog posts</p>
+        </div>
+        <Button
+          onClick={() => {
+            setEditingBlog(null);
+            setIsFormOpen(true);
+          }}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Create Blog
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="text-center py-12">
+          <p className="text-gray-500">Loading blogs...</p>
+        </div>
+      ) : blogs.length === 0 ? (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+          <p className="text-gray-500 mb-4">No blogs found</p>
+          <Button
+            onClick={() => {
+              setEditingBlog(null);
+              setIsFormOpen(true);
+            }}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Create Your First Blog
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {blogs.map((blog) => (
+            <Card
+              key={blog.id}
+              className={`flex flex-col ${
+                blog.is_deleted ? "opacity-60 bg-red-50" : ""
+              }`}
+            >
+              <CardHeader>
+                <CardTitle className="line-clamp-2">
+                  <div className="flex items-center gap-2">
+                    {blog.title}
+                    {blog.is_deleted && (
+                      <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
+                        Deleted
+                      </span>
+                    )}
+                  </div>
+                </CardTitle>
+                <CardDescription>
+                  {new Date(blog.created_at).toLocaleDateString()}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1">
+                <p className="text-sm text-gray-600 line-clamp-3">
+                  {blog.excerpt || "No content"}
+                </p>
+                {blog.images &&
+                  Array.isArray(blog.images) &&
+                  blog.images.length > 0 && (
+                    <div className="mt-4">
+                      <img
+                        src={blog.images[0].src}
+                        alt={blog.images[0].alt || "Blog image"}
+                        className="w-full h-32 object-cover rounded"
+                      />
+                    </div>
+                  )}
+              </CardContent>
+              <CardFooter className="flex gap-2">
+                {blog.is_deleted ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 text-green-600 hover:text-green-700"
+                    onClick={() => setRestoringBlogId(blog.id)}
+                  >
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Restore
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => {
+                        setEditingBlog(blog);
+                        setIsFormOpen(true);
+                      }}
+                    >
+                      <Pencil className="w-4 h-4 mr-2" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => setDeletingBlogId(blog.id)}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete
+                    </Button>
+                  </>
+                )}
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {isFormOpen && (
+        <BlogForm
+          blog={editingBlog}
+          onClose={() => setIsFormOpen(false)}
+          onSuccess={() => {
+            fetchBlogs();
+            setIsFormOpen(false);
+          }}
+        />
+      )}
+
+      <AlertDialog
+        open={!!deletingBlogId}
+        onOpenChange={(open) => !open && setDeletingBlogId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will soft-delete the blog post. You can restore it later if
+              needed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingBlogId && handleDelete(deletingBlogId)}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={!!restoringBlogId}
+        onOpenChange={(open) => !open && setRestoringBlogId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Restore Blog?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will restore the deleted blog post and make it available
+              again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => restoringBlogId && handleRestore(restoringBlogId)}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Restore
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
