@@ -51,7 +51,7 @@ export class PDFGenerator {
       
       // Use the component as JSX - ensure React is imported properly
       const DocumentComponent = ResumeDocument;
-      const stream = await render(<DocumentComponent />, "/tmp/test.pdf");
+      const stream = await render(<DocumentComponent data={application} />, "/tmp/test.pdf");
 
       // Convert stream to buffer  
       const chunks: any[] = [];
