@@ -1,6 +1,6 @@
 import React from "react";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
-import { ResumeData } from "@/types/resume";
+import { Application } from "@/types/application";
 import { ResumeTable } from "./resume/ResumeTable";
 import { ResumeBulletList } from "./resume/ResumeChecklist";
 
@@ -56,29 +56,6 @@ const styles = StyleSheet.create({
     lineHeight: 1.6,
     color: "#000000",
   },
-  summaryDetails: {
-    marginTop: 8,
-    fontSize: 14,
-    color: "#000000",
-  },
-  summaryDetailsSmall: {
-    marginTop: 4,
-    fontSize: 14,
-    color: "#000000",
-  },
-  educationItem: {
-    marginTop: 0,
-  },
-  educationName: {
-    fontWeight: "bold",
-    fontSize: 14,
-    color: "#000000",
-  },
-  educationDetails: {
-    fontSize: 14,
-    marginTop: 2,
-    color: "#000000",
-  },
   workCompany: {
     fontWeight: "bold",
     fontSize: 14,
@@ -89,24 +66,21 @@ const styles = StyleSheet.create({
     marginTop: 2,
     color: "#000000",
   },
-  workSummary: {
-    marginTop: 8,
-    fontSize: 14,
-    color: "#000000",
-  },
   projectName: {
     fontWeight: "bold",
     fontSize: 14,
     color: "#000000",
+    marginTop: 8,
   },
   projectAim: {
-    margin: "0 0 8 0",
     fontSize: 14,
     color: "#000000",
+    marginTop: 2,
   },
   projectTech: {
     fontSize: 14,
     color: "#000000",
+    marginTop: 2,
   },
   publicationTitle: {
     fontWeight: "bold",
@@ -116,42 +90,114 @@ const styles = StyleSheet.create({
   publicationDetails: {
     fontSize: 14,
     color: "#000000",
-  },
-  skillsText: {
-    fontSize: 14,
-    color: "#000000",
-  },
-  languagesGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 16,
-  },
-  languageItem: {
-    fontSize: 14,
-    color: "#000000",
+    marginTop: 2,
   },
 });
 
 interface ResumeDocumentProps {
-  data: ResumeData;
+  data: Application;
 }
 
-export const createResumeDocument = (data: ResumeData) => (
+export const createResumeDocument = (data: Application) => (
   <ResumeDocument data={data} />
 );
 
 export function ResumeDocument({ data }: ResumeDocumentProps) {
+  console.log(data, "data in Resume document")
+  // ---- top bar ----
   const hasAddress =
-    data.address_line_1 ||
-    data.address_line_2 ||
-    data.city ||
-    data.state ||
-    data.pincode;
-  const hasEducation = data.college_name || data.school_name;
-  const hasWork = data.company_name && (data.work_from || data.work_to);
-  const hasProjects =
-    data.project_experience && data.project_experience.length > 0;
-  const hasPublication = data.published_paper && data.journal_name;
+    !!(data.address_line_1 || data.address_line_2 || data.city || data.state || data.pincode);
+
+  // ---- sections presence (normalized) ----
+  const hasEducation = Array.isArray(data.education) && data.education.length > 0;
+  const hasWork = Array.isArray(data.work_experience) && data.work_experience.length > 0;
+  const hasProjects = Array.isArray(data.projects) && data.projects.length > 0;
+  const hasPublications =
+    Array.isArray(data.published_papers) && data.published_papers.length > 0;
+  const hasTechSkills =
+    Array.isArray(data.technical_skills) && data.technical_skills.length > 0;
+  const hasLanguages = Array.isArray(data.languages) && data.languages.length > 0;
+
+  // ---- CURRENT DETAILS table ----
+  const currentDetailsRows: Array<{ label: string; value: string }> = [];
+  if (data.current_ctc != null) {
+    currentDetailsRows.push({
+      label: "Current CTC:",
+      value: `₹${data.current_ctc} LPA`,
+    });
+  }
+  if (data.yoe != null) {
+    currentDetailsRows.push({
+      label: "Total Work Experience:",
+      value: `${data.yoe} Years`,
+    });
+  }
+  if (data.domain && data.domain.length > 0) {
+    currentDetailsRows.push({
+      label: "Domain of Expertise:",
+      value: data.domain.join(", "),
+    });
+  }
+  if (data.preferred_job_role && data.preferred_job_role.length > 0) {
+    currentDetailsRows.push({
+      label: "Preferred Job Role/Function:",
+      value: data.preferred_job_role.join(", "),
+    });
+  }
+  if (data.preferred_job_location && data.preferred_job_location.length > 0) {
+    currentDetailsRows.push({
+      label: "Preferred Job Location:",
+      value: data.preferred_job_location.join(", "),
+    });
+  }
+
+  // ---- EDUCATION table (normalized -> rows) ----
+  const educationRows: Array<{ label: string; value: string }> = [];
+  if (hasEducation) {
+    data.education.forEach((e) => {
+      const line1 = [e.institution_name, e.city, e.country].filter(Boolean).join(", ");
+      const line2 = [
+        e.degree_discipline ? `${e.degree_discipline}` : null,
+        e.cgpa != null ? `CGPA: ${e.cgpa}/10` : null,
+        e.percentage != null ? `Percentage: ${e.percentage}%` : null,
+      ]
+        .filter(Boolean)
+        .join(" • ");
+      const line3 = e.graduation_date ? `Graduation: ${e.graduation_date}` : null;
+      const value = [line1, line2, line3].filter(Boolean).join("\n");
+      educationRows.push({
+        label:
+          e.level
+            ? e.level.toUpperCase()
+            : "EDUCATION",
+        value,
+      });
+
+      if (e.relevant_courses && e.relevant_courses.length > 0) {
+        educationRows.push({
+          label: "Relevant Courses:",
+          value: e.relevant_courses.join(", "),
+        });
+      }
+    });
+  }
+
+  // ---- TECH SKILLS rows (normalized array -> table) ----
+  const techSkillRows: Array<{ label: string; value: string }> = hasTechSkills
+    ? data.technical_skills.map((t) => ({
+        label: t.skill_category,
+        value: (t.skills || []).join(", "),
+      }))
+    : [];
+
+  // ---- LANGUAGES rows (normalized array -> table) ----
+  const languageRows: Array<{ label: string; value: string }> = hasLanguages
+    ? data.languages.map((l) => ({
+        label: l.language_name,
+        value:
+          l.proficiency.charAt(0).toUpperCase() + l.proficiency.slice(1), // capitalize
+      }))
+    : [];
 
   return (
     <Document>
@@ -178,175 +224,138 @@ export function ResumeDocument({ data }: ResumeDocumentProps) {
           )}
         </View>
 
+        {/* Current Details */}
+        {currentDetailsRows.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>CURRENT DETAILS</Text>
+            <ResumeTable rows={currentDetailsRows} />
+          </View>
+        )}
+
         {/* Professional Summary */}
         {data.professional_summary && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>PROFESSIONAL SUMMARY</Text>
             <Text style={styles.summaryText}>{data.professional_summary}</Text>
-            {data.yoe && (
-              <Text style={styles.summaryDetails}>
-                Total Work Experience: {data.yoe} Years
-              </Text>
-            )}
-            {data.current_ctc && (
-              <Text style={styles.summaryDetailsSmall}>
-                Current CTC: {data.current_ctc} LPA
-              </Text>
-            )}
-            {data.domain && data.domain.length > 0 && (
-              <Text style={styles.summaryDetailsSmall}>
-                Domain of Expertise: {data.domain.join(", ")}
-              </Text>
-            )}
           </View>
         )}
 
-        {/* Education */}
-        {hasEducation && (
+        {/* Education (normalized) */}
+        {hasEducation && educationRows.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>EDUCATION</Text>
-            {data.college_name && (
-              <View style={styles.educationItem}>
-                <Text style={styles.educationName}>{data.college_name}</Text>
-                <Text style={styles.educationDetails}>
-                  {data.college_city}, {data.college_country}
-                </Text>
-                <Text style={styles.educationDetails}>
-                  {data.degree_discipline}
-                  {data.cgpa && ` - ${data.cgpa} CGPA`}
-                </Text>
-                {data.graduation_date && (
-                  <Text style={styles.educationDetails}>
-                    Graduation: {data.graduation_date}
-                  </Text>
-                )}
-                {data.relevant_courses && data.relevant_courses.length > 0 && (
-                  <Text style={styles.educationDetails}>
-                    Relevant Courses: {data.relevant_courses.join(", ")}
-                  </Text>
-                )}
-              </View>
-            )}
-
-            {data.school_name && (
-              <View style={styles.educationItem}>
-                <Text style={styles.educationName}>{data.school_name}</Text>
-                <Text style={styles.educationDetails}>
-                  {data.school_city}, {data.school_country}
-                </Text>
-                {data.higher_secondary_percentage && (
-                  <Text style={styles.educationDetails}>
-                    Higher Secondary Certificate (HSC) -{" "}
-                    {data.higher_secondary_percentage}%
-                  </Text>
-                )}
-                {data.school_completion_date && (
-                  <Text style={styles.educationDetails}>
-                    Completion: {data.school_completion_date}
-                  </Text>
-                )}
-              </View>
-            )}
+            <ResumeTable rows={educationRows} />
           </View>
         )}
 
-        {/* Work Experience */}
+        {/* Work Experience (normalized) */}
         {hasWork && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>PROFESSIONAL EXPERIENCE</Text>
-            <Text style={styles.workCompany}>{data.company_name}</Text>
-            {data.company_city && data.company_country && (
-              <Text style={styles.workDetails}>
-                {data.company_city}, {data.company_country}
-              </Text>
-            )}
-            {data.designation && (
-              <Text style={styles.workDetails}>{data.designation}</Text>
-            )}
-            <Text style={styles.workDetails}>
-              {data.work_from && data.work_from}
-              {data.work_from && data.work_to && " - "}
-              {data.work_to && data.work_to}
-            </Text>
-            {data.work_summary && (
-              // <Text style={styles.workSummary}>{data.work_summary}</Text>
-              <ResumeBulletList items={data.work_summary} />
-            )}
-          </View>
-        )}
-
-        {/* Projects */}
-        {hasProjects && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>ACADEMIC PROJECTS & PAPERS</Text>
-            {data.project_experience?.map((project, index) => (
-              <View key={index} style={styles.educationItem}>
-                <Text style={styles.projectName}>{project.project_name}</Text>
-                <Text style={styles.projectAim}>{project.client}</Text>
-                {project.duration && (
-                  <Text style={styles.projectTech}>{project.duration}</Text>
+            {data.work_experience.map((w) => (
+              <View key={w.id} wrap={false}>
+                {w.company_name && (
+                  <Text style={styles.workCompany}>{w.company_name}</Text>
+                )}
+                {(w.company_city || w.company_country) && (
+                  <Text style={styles.workDetails}>
+                    {[w.company_city, w.company_country].filter(Boolean).join(", ")}
+                  </Text>
+                )}
+                {(w.designation || w.work_from || w.work_to) && (
+                  <Text style={styles.workDetails}>
+                    {w.designation ? `${w.designation}` : ""}
+                    {w.designation && (w.work_from || w.work_to) ? " • " : ""}
+                    {[w.work_from, w.work_to].filter(Boolean).join(" - ")}
+                  </Text>
+                )}
+                {Array.isArray(w.work_summary) && w.work_summary.length > 0 && (
+                  <ResumeBulletList items={w.work_summary} />
                 )}
               </View>
             ))}
           </View>
         )}
 
-        {/* Publications */}
-        {hasPublication && (
+        {/* Projects (normalized) */}
+        {hasProjects && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>PUBLISHED PAPER</Text>
-            <Text style={styles.publicationTitle}>{data.published_paper}</Text>
-            <Text style={styles.publicationDetails}>
-              {data.journal_name}
-              {data.volume_issue && `, ${data.volume_issue}`}
-              {data.publication_year && `, ${data.publication_year}`}
-            </Text>
-            {data.issn && (
-              <Text style={styles.publicationDetails}>ISSN: {data.issn}</Text>
-            )}
+            <Text style={styles.sectionTitle}>PROJECTS</Text>
+            {data.projects.map((p) => (
+              <View key={p.id}>
+                {p.project_name && (
+                  <Text style={styles.projectName}>{p.project_name}</Text>
+                )}
+                {p.project_aim && (
+                  <Text style={styles.projectAim}>{p.project_aim}</Text>
+                )}
+                {p.tech_stack && p.tech_stack.length > 0 && (
+                  <Text style={styles.projectTech}>
+                    Tech: {p.tech_stack.join(", ")}
+                  </Text>
+                )}
+                {p.achievements && p.achievements.length > 0 && (
+                  <ResumeBulletList items={p.achievements} />
+                )}
+              </View>
+            ))}
           </View>
         )}
 
-        {/* Technical Skills */}
-        {data.technical_skills &&
-          Object.keys(data.technical_skills).length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>TECHNICAL SKILLS</Text>
-              {/* <Text style={styles.skillsText}>
-              {data.technical_skills.join(", ")}
-            </Text> */}
-              <ResumeTable
-                rows={Object.entries(data.technical_skills).map(
-                  ([category, skills]) => ({
-                    label: category,
-                    value: skills.join(", "),
-                  })
-                )}
-                showHeader={true}
-                labelWidth="35%"
-                valueWidth="65%"
-              />
-            </View>
-          )}
-
-        {/* Languages */}
-        {data.languages && data.languages.length > 0 && (
+        {/* Publications (normalized) */}
+        {hasPublications && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>LANGUAGE</Text>
-            {/* <View style={styles.languagesGrid}>
-              {data.languages.map((language, index) => (
-                <Text key={index} style={styles.languageItem}>
-                  {language}
-                  {data.language_proficiency &&
-                    ` (${data.language_proficiency})`}
-                </Text>
-              ))}
-            </View> */}
+            <Text style={styles.sectionTitle}>PUBLICATIONS</Text>
+            {data.published_papers.map((pub) => (
+              <View key={pub.id}>
+                {pub.paper_title && (
+                  <Text style={styles.publicationTitle}>{pub.paper_title}</Text>
+                )}
+                {(pub.journal_name || pub.volume_issue || pub.publication_year) && (
+                  <Text style={styles.publicationDetails}>
+                    {[
+                      pub.journal_name,
+                      pub.volume_issue,
+                      pub.publication_year,
+                    ]
+                      .filter(Boolean)
+                      .join(", ")}
+                  </Text>
+                )}
+                {pub.issn && (
+                  <Text style={styles.publicationDetails}>ISSN: {pub.issn}</Text>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Technical Skills (normalized) */}
+        {hasTechSkills && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>TECHNICAL SKILLS</Text>
             <ResumeTable
-              rows={data.languages.map((language) => ({
-                label: language,
-                value: language,
-              }))}
+              rows={techSkillRows}
+              showHeader={true}
+              labelWidth="35%"
+              valueWidth="65%"
+              headerOne="Category"
+              headerTwo="Skills"
+            />
+          </View>
+        )}
+
+        {/* Languages (normalized) */}
+        {hasLanguages && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>LANGUAGES</Text>
+            <ResumeTable
+              rows={languageRows}
+              showHeader={true}
+              labelWidth="35%"
+              valueWidth="65%"
+              headerOne="Name"
+              headerTwo="Proficiency Level"
             />
           </View>
         )}
@@ -354,30 +363,3 @@ export function ResumeDocument({ data }: ResumeDocumentProps) {
     </Document>
   );
 }
-
-// Create styles
-// const styles = StyleSheet.create({
-//   page: {
-//     flexDirection: 'row',
-//     backgroundColor: '#FF0000'
-//   },
-//   section: {
-//     margin: 10,
-//     padding: 10,
-//     flexGrow: 1
-//   }
-// });
-
-// // Create Document Component
-// export const ResumeDocument = () => (
-//   <Document>
-//     <Page size="A4" style={styles.page}>
-//       <View style={styles.section}>
-//         <Text>Section #1</Text>
-//       </View>
-//       <View style={styles.section}>
-//         <Text>Section #2</Text>
-//       </View>
-//     </Page>
-//   </Document>
-// );

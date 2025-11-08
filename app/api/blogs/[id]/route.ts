@@ -2,6 +2,44 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { makeExcerpt } from "@/lib/utils";
 
+// GET /api/blogs/[id] - Fetch complete blog record
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    const { data, error } = await supabase
+      .from("blogs")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    if (!data) {
+      return NextResponse.json({ error: "Blog not found" }, { status: 404 });
+    }
+
+    // Ensure excerpt exists
+    const blogWithExcerpt = {
+      ...data,
+      excerpt: data.excerpt || makeExcerpt(data.content || "", 180),
+    };
+
+    return NextResponse.json({ data: blogWithExcerpt });
+  } catch (error) {
+    console.error("Error fetching blog:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
 // DELETE image from storage bucket
 async function deleteImageFromStorage(imageUrl: string) {
   try {

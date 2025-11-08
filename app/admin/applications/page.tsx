@@ -7,7 +7,7 @@ import { ApplicationForm } from "@/components/ApplicationForm";
 import { ApplicationsTable } from "@/components/resume/ApplicationsTable";
 import { PreviewDialog } from "@/components/resume/PreviewDialog";
 import { useToast } from "@/hooks/use-toast";
-import type { Application } from "@/types/application";
+import type { Application, ApplicationListItem } from "@/types/application";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,9 +18,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 
 export default function ApplicationsPage() {
-  const [applications, setApplications] = useState<Application[]>([]);
+  const [applications, setApplications] = useState<ApplicationListItem[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingApplication, setEditingApplication] =
     useState<Application | null>(null);
@@ -31,20 +40,27 @@ export default function ApplicationsPage() {
   const { toast } = useToast();
   const [deletingApplicationId, setDeletingApplicationId] = useState<string | null>(null);
   const [restoringApplicationId, setRestoringApplicationId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(50);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    totalPages: 0,
+  });
 
   useEffect(() => {
     fetchApplications();
-  }, []);
+  }, [page]);
 
   const fetchApplications = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/applications");
+      const response = await fetch(`/api/applications?page=${page}&limit=${limit}`);
       if (!response.ok) {
         throw new Error("Failed to fetch applications");
       }
       const result = await response.json();
-      setApplications(result.data);
+      setApplications(result.data || []);
+      setPagination(result.pagination || { total: 0, totalPages: 0 });
     } catch (error) {
       console.error("Error fetching applications:", error);
       toast({
@@ -188,6 +204,79 @@ export default function ApplicationsPage() {
               applicationId={previewingApplicationId}
               onClose={() => setPreviewingApplicationId(null)}
             />
+          )}
+          {pagination.totalPages > 1 && (
+            <div className="mt-6">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => page > 1 && setPage(page - 1)}
+                      className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                  {(() => {
+                    const pages: (number | "ellipsis")[] = [];
+                    const totalPages = pagination.totalPages;
+                    
+                    if (totalPages <= 7) {
+                      // Show all pages if 7 or fewer
+                      for (let i = 1; i <= totalPages; i++) {
+                        pages.push(i);
+                      }
+                    } else {
+                      // Always show first page
+                      pages.push(1);
+                      
+                      if (page > 3) {
+                        pages.push("ellipsis");
+                      }
+                      
+                      // Show pages around current page
+                      const start = Math.max(2, page - 1);
+                      const end = Math.min(totalPages - 1, page + 1);
+                      for (let i = start; i <= end; i++) {
+                        pages.push(i);
+                      }
+                      
+                      if (page < totalPages - 2) {
+                        pages.push("ellipsis");
+                      }
+                      
+                      // Always show last page
+                      pages.push(totalPages);
+                    }
+                    
+                    return pages.map((item, idx) => {
+                      if (item === "ellipsis") {
+                        return (
+                          <PaginationItem key={`ellipsis-${idx}`}>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        );
+                      }
+                      return (
+                        <PaginationItem key={item}>
+                          <PaginationLink
+                            onClick={() => setPage(item)}
+                            isActive={item === page}
+                            className="cursor-pointer"
+                          >
+                            {item}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    });
+                  })()}
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => page < pagination.totalPages && setPage(page + 1)}
+                      className={page === pagination.totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
           )}
         </>
       )}

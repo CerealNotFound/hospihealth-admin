@@ -1,20 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-// GET /api/applications - Fetch all non-deleted applications
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const { data, error } = await supabase
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "50", 10);
+    const start = (page - 1) * limit;
+    const end = start + limit - 1;
+
+    // Fetch only minimal fields needed for table display
+    const { data, error, count } = await supabase
       .from("job_applications")
-      .select("*")
-      .order("created_at", { ascending: false });
+      .select(
+        "id, full_name, email, phone, yoe, current_ctc, created_at, is_deleted, job_id",
+        {
+          count: "exact",
+        }
+      )
+      .order("created_at", { ascending: false })
+      .range(start, end);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ data });
-  } catch (error) {
+    return NextResponse.json({
+      data: data || [],
+      pagination: {
+        page,
+        limit,
+        total: count || 0,
+        totalPages: Math.ceil((count || 0) / limit),
+      },
+    });
+  } catch (err) {
+    console.error("Error fetching applications:", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -22,23 +43,70 @@ export async function GET() {
   }
 }
 
-// POST /api/applications - Create new application
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const { data, error } = await supabase
+    // 1️⃣ Insert base application first
+    const {
+      education,
+      work_experience,
+      projects,
+      published_papers,
+      technical_skills,
+      languages,
+      ...baseData
+    } = body;
+
+    const { data: app, error: appError } = await supabase
       .from("job_applications")
-      .insert([body])
+      .insert([baseData])
       .select()
       .single();
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+    if (appError) throw appError;
 
-    return NextResponse.json({ data }, { status: 201 });
-  } catch (error) {
+    const application_id = app.id;
+
+    // 2️⃣ Insert nested data if provided
+    const insertNested = async (table: string, rows?: any[]) => {
+      if (!rows || rows.length === 0) return;
+      const withFk = rows.map((r) => ({ ...r, application_id }));
+      const { error } = await supabase.from(table).insert(withFk);
+      if (error) console.error(`Error inserting ${table}:`, error);
+    };
+
+    await Promise.all([
+      insertNested("education", education),
+      insertNested("work_experience", work_experience),
+      insertNested("projects", projects),
+      insertNested("published_papers", published_papers),
+      insertNested("technical_skills", technical_skills),
+      insertNested("languages", languages),
+    ]);
+
+    // 3️⃣ Return application with nested data
+    const { data: fullApp, error: fetchError } = await supabase
+      .from("job_applications")
+      .select(
+        `
+        *,
+        education:education(*),
+        work_experience:work_experience(*),
+        projects:projects(*),
+        published_papers:published_papers(*),
+        technical_skills:technical_skills(*),
+        languages:languages(*)
+      `
+      )
+      .eq("id", application_id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    return NextResponse.json({ data: fullApp }, { status: 201 });
+  } catch (err) {
+    console.error("Error creating application:", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

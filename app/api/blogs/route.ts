@@ -2,25 +2,43 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { makeExcerpt } from "@/lib/utils";
 
-// GET /api/blogs - Fetch all non-deleted blogs
-export async function GET() {
+// GET /api/blogs - Fetch all blogs (minimal fields for list view)
+export async function GET(request: NextRequest) {
   try {
-    const { data, error } = await supabase
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "50", 10);
+    const start = (page - 1) * limit;
+    const end = start + limit - 1;
+
+    // Fetch only minimal fields needed for card display
+    const { data, error, count } = await supabase
       .from("blogs")
-      .select("*")
-      .order("created_at", { ascending: false });
+      .select("id, title, excerpt, images, created_at, is_deleted", {
+        count: "exact",
+      })
+      .order("created_at", { ascending: false })
+      .range(start, end);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Add excerpt to each blog if not present
-    const blogsWithExcerpt = data?.map((blog) => ({
+    // Excerpt should already be in the database, but ensure it exists
+    const blogsWithExcerpt = (data || []).map((blog) => ({
       ...blog,
-      excerpt: blog.excerpt || makeExcerpt(blog.content, 180),
+      excerpt: blog.excerpt || "",
     }));
 
-    return NextResponse.json({ data: blogsWithExcerpt });
+    return NextResponse.json({
+      data: blogsWithExcerpt,
+      pagination: {
+        page,
+        limit,
+        total: count || 0,
+        totalPages: Math.ceil((count || 0) / limit),
+      },
+    });
   } catch (error) {
     return NextResponse.json(
       { error: "Internal server error" },

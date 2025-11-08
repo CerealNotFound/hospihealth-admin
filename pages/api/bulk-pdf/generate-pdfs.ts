@@ -47,10 +47,18 @@ export default async function handler(
       });
     }
 
-    // Fetch all applications in one query
+    // Fetch all applications in one query with all nested relations
     const { data: applications, error: fetchError } = await supabase
       .from("job_applications")
-      .select("*")
+      .select(`
+        *,
+        education:education(*),
+        work_experience:work_experience(*),
+        projects:projects(*),
+        published_papers:published_papers(*),
+        technical_skills:technical_skills(*),
+        languages:languages(*)
+      `)
       .in("id", ids);
 
     if (fetchError) {

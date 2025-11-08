@@ -1,7 +1,7 @@
 import { ResumeTemplate } from "@/components/resume/ResumeTemplate";
-import { ResumeData } from "@/types/resume";
+import { Application } from "@/types/application";
 
-export default function PreviewComponent({ data }: { data: ResumeData }) {
+export default function PreviewComponent({ data }: { data: Application }) {
   return (
     <div
       style={{

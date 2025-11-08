@@ -22,12 +22,22 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 
 interface Job {
   id: string;
   job_title: string;
   about_us: string | null;
   job_description: string | null;
+  job_details?: string | null;
   openings: number | null;
   experience_required: string[] | null;
   tags: string[] | null;
@@ -44,16 +54,28 @@ export default function JobsPage() {
   const [deletingJobId, setDeletingJobId] = useState<string | null>(null);
   const [restoringJobId, setRestoringJobId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingJob, setIsLoadingJob] = useState(false);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(50);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    totalPages: 0,
+  });
+
+  useEffect(() => {
+    fetchJobs();
+  }, [page]);
 
   const fetchJobs = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/jobs");
+      const response = await fetch(`/api/jobs?page=${page}&limit=${limit}`);
       if (!response.ok) {
         throw new Error("Failed to fetch jobs");
       }
       const result = await response.json();
-      setJobs(result.data);
+      setJobs(result.data || []);
+      setPagination(result.pagination || { total: 0, totalPages: 0 });
     } catch (error) {
       console.error("Error fetching jobs:", error);
     }
@@ -94,9 +116,23 @@ export default function JobsPage() {
     }
   };
 
-  useEffect(() => {
-    fetchJobs();
-  }, []);
+  const handleEdit = async (job: Job) => {
+    setIsLoadingJob(true);
+    try {
+      const response = await fetch(`/api/jobs/${job.id}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch job details");
+      }
+      const result = await response.json();
+      setEditingJob(result.data);
+      setIsFormOpen(true);
+    } catch (error) {
+      console.error("Error fetching job details:", error);
+    } finally {
+      setIsLoadingJob(false);
+    }
+  };
+
 
   return (
     <div className="w-full max-w-screen-xl mx-auto py-4 md:py-6">
@@ -110,6 +146,7 @@ export default function JobsPage() {
             setEditingJob(null);
             setIsFormOpen(true);
           }}
+          disabled={isLoadingJob}
         >
           <Plus className="w-4 h-4 mr-2" />
           Create Job
@@ -128,6 +165,7 @@ export default function JobsPage() {
               setEditingJob(null);
               setIsFormOpen(true);
             }}
+            disabled={isLoadingJob}
           >
             <Plus className="w-4 h-4 mr-2" />
             Create Your First Job
@@ -195,10 +233,8 @@ export default function JobsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => {
-                              setEditingJob(job);
-                              setIsFormOpen(true);
-                            }}
+                            onClick={() => handleEdit(job)}
+                            disabled={isLoadingJob}
                           >
                             <Pencil className="w-4 h-4" />
                           </Button>
@@ -217,6 +253,72 @@ export default function JobsPage() {
               </TableBody>
             </Table>
           </div>
+        </div>
+      )}
+
+      {!isLoading && jobs.length > 0 && pagination.totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => page > 1 && setPage(page - 1)}
+                  className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              {(() => {
+                const pages: (number | "ellipsis")[] = [];
+                const totalPages = pagination.totalPages;
+                
+                if (totalPages <= 7) {
+                  for (let i = 1; i <= totalPages; i++) {
+                    pages.push(i);
+                  }
+                } else {
+                  pages.push(1);
+                  if (page > 3) {
+                    pages.push("ellipsis");
+                  }
+                  const start = Math.max(2, page - 1);
+                  const end = Math.min(totalPages - 1, page + 1);
+                  for (let i = start; i <= end; i++) {
+                    pages.push(i);
+                  }
+                  if (page < totalPages - 2) {
+                    pages.push("ellipsis");
+                  }
+                  pages.push(totalPages);
+                }
+                
+                return pages.map((item, idx) => {
+                  if (item === "ellipsis") {
+                    return (
+                      <PaginationItem key={`ellipsis-${idx}`}>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    );
+                  }
+                  return (
+                    <PaginationItem key={item}>
+                      <PaginationLink
+                        onClick={() => setPage(item)}
+                        isActive={item === page}
+                        className="cursor-pointer"
+                      >
+                        {item}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                });
+              })()}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => page < pagination.totalPages && setPage(page + 1)}
+                  className={page === pagination.totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       )}
 

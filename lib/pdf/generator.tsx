@@ -24,10 +24,20 @@ export class PDFGenerator {
       console.log("=== PDF GENERATION DEBUG ===");
       console.log("Application ID:", applicationId);
 
-      // Fetch application data from Supabase
+      // Fetch application data from Supabase with all nested relations
       const { data: application, error } = await supabase
         .from("job_applications")
-        .select("*")
+        .select(
+          `
+          *,
+          education:education(*),
+          work_experience:work_experience(*),
+          projects:projects(*),
+          published_papers:published_papers(*),
+          technical_skills:technical_skills(*),
+          languages:languages(*)
+        `
+        )
         .eq("id", applicationId)
         .single();
 
@@ -48,12 +58,15 @@ export class PDFGenerator {
 
       // Render to stream
       const { renderToStream, render } = ReactPDF;
-      
+
       // Use the component as JSX - ensure React is imported properly
       const DocumentComponent = ResumeDocument;
-      const stream = await render(<DocumentComponent data={application} />, "/tmp/test.pdf");
+      const stream = await render(
+        <DocumentComponent data={application} />,
+        "/tmp/test.pdf"
+      );
 
-      // Convert stream to buffer  
+      // Convert stream to buffer
       const chunks: any[] = [];
       for await (const chunk of stream) {
         chunks.push(chunk);

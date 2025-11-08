@@ -1,7 +1,8 @@
-import { ResumeData } from "@/types/resume";
+import { Fragment } from "react";
+import { Application } from "@/types/application";
 
 interface ResumeTemplateProps {
-  data: ResumeData;
+  data: Application;
   className?: string;
 }
 
@@ -122,19 +123,24 @@ function ResumeBulletList({ items }: BulletListProps) {
 }
 
 export function ResumeTemplate({ data, className }: ResumeTemplateProps) {
+  // ---- Presence checks (normalized arrays) ----
   const hasAddress =
     data.address_line_1 ||
     data.address_line_2 ||
     data.city ||
     data.state ||
     data.pincode;
-  const hasEducation = data.college_name || data.school_name;
-  const hasWork = data.company_name && (data.work_from || data.work_to);
-  const hasProjects =
-    data.project_experience && data.project_experience.length > 0;
-  const hasPublication = data.published_paper && data.journal_name;
-
-  console.log(data.project_experience);
+  const hasEducation =
+    Array.isArray(data.education) && data.education.length > 0;
+  const hasWork =
+    Array.isArray(data.work_experience) && data.work_experience.length > 0;
+  const hasProjects = Array.isArray(data.projects) && data.projects.length > 0;
+  const hasPublications =
+    Array.isArray(data.published_papers) && data.published_papers.length > 0;
+  const hasTechSkills =
+    Array.isArray(data.technical_skills) && data.technical_skills.length > 0;
+  const hasLanguages =
+    Array.isArray(data.languages) && data.languages.length > 0;
 
   return (
     <div
@@ -386,7 +392,7 @@ export function ResumeTemplate({ data, className }: ResumeTemplateProps) {
         </section>
       )}
 
-      {/* Education */}
+      {/* Education - Now iterating over education array */}
       {hasEducation && (
         <section style={{ marginBottom: "1.5rem" }}>
           <h2
@@ -403,8 +409,8 @@ export function ResumeTemplate({ data, className }: ResumeTemplateProps) {
           </h2>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <tbody>
-              {data.college_name && (
-                <>
+              {data.education.map((edu, index) => (
+                <Fragment key={edu.id || index}>
                   <tr>
                     <td
                       style={{
@@ -413,9 +419,10 @@ export function ResumeTemplate({ data, className }: ResumeTemplateProps) {
                         verticalAlign: "top",
                         fontSize: "14px",
                         color: "#000000",
+                        paddingTop: index > 0 ? "1rem" : "0.25rem",
                       }}
                     >
-                      College Name, City, Country
+                      {edu.level ? edu.level.toUpperCase() : "Institution"}
                     </td>
                     <td
                       style={{
@@ -424,101 +431,61 @@ export function ResumeTemplate({ data, className }: ResumeTemplateProps) {
                         verticalAlign: "top",
                         fontSize: "14px",
                         color: "#000000",
+                        paddingTop: index > 0 ? "1rem" : "0.25rem",
                       }}
                     >
-                      {data.college_name}
-                      {data.college_city &&
-                        data.college_country &&
-                        `, ${data.college_city}, ${data.college_country}`}
+                      {edu.institution_name}
+                      {edu.city &&
+                        edu.country &&
+                        `, ${edu.city}, ${edu.country}`}
                       <br />
-                      {data.degree_discipline && (
+                      {edu.degree_discipline && (
                         <>
-                          {data.degree_discipline}
-                          {data.cgpa && ` – CGPA: ${data.cgpa}/10`}
+                          {edu.degree_discipline}
+                          {edu.cgpa && ` – CGPA: ${edu.cgpa}/10`}
+                          {edu.percentage &&
+                            ` – Percentage: ${edu.percentage}%`}
                           <br />
                         </>
                       )}
-                      {data.graduation_date &&
-                        `Graduation: ${data.graduation_date}`}
+                      {edu.graduation_date &&
+                        `Graduation: ${edu.graduation_date}`}
                     </td>
                   </tr>
-                  {data.relevant_courses &&
-                    data.relevant_courses.length > 0 && (
-                      <tr>
-                        <td
-                          style={{
-                            width: "35%",
-                            padding: "0.25rem 0",
-                            verticalAlign: "top",
-                            fontSize: "14px",
-                            color: "#000000",
-                          }}
-                        >
-                          Relevant Courses:
-                        </td>
-                        <td
-                          style={{
-                            width: "65%",
-                            padding: "0.25rem 0",
-                            verticalAlign: "top",
-                            fontSize: "14px",
-                            color: "#000000",
-                          }}
-                        >
-                          {data.relevant_courses.join(", ")}
-                        </td>
-                      </tr>
-                    )}
-                </>
-              )}
-
-              {data.school_name && (
-                <tr>
-                  <td
-                    style={{
-                      width: "35%",
-                      padding: "0.25rem 0",
-                      verticalAlign: "top",
-                      fontSize: "14px",
-                      color: "#000000",
-                      paddingTop: data.college_name ? "1rem" : "0.25rem",
-                    }}
-                  >
-                    School Name, City, Country
-                  </td>
-                  <td
-                    style={{
-                      width: "65%",
-                      padding: "0.25rem 0",
-                      verticalAlign: "top",
-                      fontSize: "14px",
-                      color: "#000000",
-                      paddingTop: data.college_name ? "1rem" : "0.25rem",
-                    }}
-                  >
-                    {data.school_name}
-                    {data.school_city &&
-                      data.school_country &&
-                      `, ${data.school_city}, ${data.school_country}`}
-                    <br />
-                    {data.higher_secondary_percentage && (
-                      <>
-                        Higher Secondary Certificate (HSC) –{" "}
-                        {data.higher_secondary_percentage}%
-                        <br />
-                      </>
-                    )}
-                    {data.school_completion_date &&
-                      `Completion: ${data.school_completion_date}`}
-                  </td>
-                </tr>
-              )}
+                  {edu.relevant_courses && edu.relevant_courses.length > 0 && (
+                    <tr>
+                      <td
+                        style={{
+                          width: "35%",
+                          padding: "0.25rem 0",
+                          verticalAlign: "top",
+                          fontSize: "14px",
+                          color: "#000000",
+                        }}
+                      >
+                        Relevant Courses:
+                      </td>
+                      <td
+                        style={{
+                          width: "65%",
+                          padding: "0.25rem 0",
+                          verticalAlign: "top",
+                          fontSize: "14px",
+                          color: "#000000",
+                        }}
+                      >
+                        {edu.relevant_courses.join(", ")}
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              ))}
             </tbody>
           </table>
         </section>
       )}
 
-      {/* Work Experience */}
+      {/* Work Experience - Now iterating over work_experience array */}
       {hasWork && (
         <section style={{ marginBottom: "1.5rem" }}>
           <h2
@@ -533,49 +500,71 @@ export function ResumeTemplate({ data, className }: ResumeTemplateProps) {
           >
             PROFESSIONAL EXPERIENCE
           </h2>
-          <div
-            style={{ fontWeight: "600", fontSize: "14px", color: "#000000" }}
-          >
-            {data.company_name}
-          </div>
-          {data.company_city && data.company_country && (
+          {data.work_experience.map((work, index) => (
             <div
+              key={work.id || index}
               style={{
-                fontSize: "14px",
-                marginTop: "0.125rem",
-                color: "#000000",
+                marginBottom:
+                  index < data.work_experience.length - 1 ? "1rem" : "0",
               }}
             >
-              {data.company_city}, {data.company_country}
+              {work.company_name && (
+                <div
+                  style={{
+                    fontWeight: "600",
+                    fontSize: "14px",
+                    color: "#000000",
+                  }}
+                >
+                  {work.company_name}
+                </div>
+              )}
+              {(work.company_city || work.company_country) && (
+                <div
+                  style={{
+                    fontSize: "14px",
+                    marginTop: "0.125rem",
+                    color: "#000000",
+                  }}
+                >
+                  {[work.company_city, work.company_country]
+                    .filter(Boolean)
+                    .join(", ")}
+                </div>
+              )}
+              {work.designation && (
+                <div
+                  style={{
+                    fontSize: "14px",
+                    marginTop: "0.125rem",
+                    color: "#000000",
+                  }}
+                >
+                  {work.designation}
+                </div>
+              )}
+              {(work.work_from || work.work_to) && (
+                <div
+                  style={{
+                    fontSize: "14px",
+                    marginTop: "0.125rem",
+                    color: "#000000",
+                  }}
+                >
+                  {work.work_from && work.work_from}
+                  {work.work_from && work.work_to && " - "}
+                  {work.work_to && work.work_to}
+                </div>
+              )}
+              {work.work_summary && work.work_summary.length > 0 && (
+                <ResumeBulletList items={work.work_summary} />
+              )}
             </div>
-          )}
-          {data.designation && (
-            <div
-              style={{
-                fontSize: "14px",
-                marginTop: "0.125rem",
-                color: "#000000",
-              }}
-            >
-              {data.designation}
-            </div>
-          )}
-          <div
-            style={{
-              fontSize: "14px",
-              marginTop: "0.125rem",
-              color: "#000000",
-            }}
-          >
-            {data.work_from && data.work_from}
-            {data.work_from && data.work_to && " - "}
-            {data.work_to && data.work_to}
-          </div>
-          {data.work_summary && <ResumeBulletList items={data.work_summary} />}
+          ))}
         </section>
       )}
 
-      {/* Projects */}
+      {/* Projects - Now iterating over projects array */}
       {hasProjects && (
         <section style={{ marginBottom: "1.5rem" }}>
           <h2
@@ -588,39 +577,50 @@ export function ResumeTemplate({ data, className }: ResumeTemplateProps) {
               paddingBottom: "0.25rem",
             }}
           >
-            ACADEMIC PROJECTS & PAPERS
+            PROJECTS
           </h2>
-          {data.project_experience?.map((project, index) => (
-            <div key={index} style={{ marginTop: index === 0 ? 0 : "1rem" }}>
-              <div
-                style={{
-                  fontWeight: "600",
-                  fontSize: "14px",
-                  color: "#000000",
-                }}
-              >
-                {project.project_name}
-              </div>
-              <p
-                style={{
-                  fontSize: "14px",
-                  color: "#000000",
-                }}
-              >
-                {project.client}
-              </p>
-              {/* {project.tech_stack && ( */}
-              <div style={{ fontSize: "14px", color: "#000000" }}>
-                {project.duration}
-              </div>
-              {/* )} */}
+          {data.projects.map((project, index) => (
+            <div
+              key={project.id || index}
+              style={{ marginTop: index === 0 ? 0 : "1rem" }}
+            >
+              {project.project_name && (
+                <div
+                  style={{
+                    fontWeight: "600",
+                    fontSize: "14px",
+                    color: "#000000",
+                  }}
+                >
+                  {project.project_name}
+                </div>
+              )}
+              {project.project_aim && (
+                <p
+                  style={{
+                    fontSize: "14px",
+                    color: "#000000",
+                    margin: "0.25rem 0",
+                  }}
+                >
+                  {project.project_aim}
+                </p>
+              )}
+              {project.tech_stack && project.tech_stack.length > 0 && (
+                <div style={{ fontSize: "14px", color: "#000000" }}>
+                  Tech: {project.tech_stack.join(", ")}
+                </div>
+              )}
+              {project.achievements && project.achievements.length > 0 && (
+                <ResumeBulletList items={project.achievements} />
+              )}
             </div>
           ))}
         </section>
       )}
 
-      {/* Publications */}
-      {hasPublication && (
+      {/* Publications - Now iterating over published_papers array */}
+      {hasPublications && (
         <section style={{ marginBottom: "1.5rem" }}>
           <h2
             style={{
@@ -632,28 +632,45 @@ export function ResumeTemplate({ data, className }: ResumeTemplateProps) {
               paddingBottom: "0.25rem",
             }}
           >
-            PUBLISHED PAPER
+            PUBLICATIONS
           </h2>
-          <div
-            style={{ fontWeight: "600", fontSize: "14px", color: "#000000" }}
-          >
-            {data.published_paper}
-          </div>
-          <div style={{ fontSize: "14px", color: "#000000" }}>
-            {data.journal_name}
-            {data.volume_issue && `, ${data.volume_issue}`}
-            {data.publication_year && `, ${data.publication_year}`}
-          </div>
-          {data.issn && (
-            <div style={{ fontSize: "14px", color: "#000000" }}>
-              ISSN: {data.issn}
+          {data.published_papers.map((pub, index) => (
+            <div
+              key={pub.id || index}
+              style={{ marginTop: index === 0 ? 0 : "1rem" }}
+            >
+              {pub.paper_title && (
+                <div
+                  style={{
+                    fontWeight: "600",
+                    fontSize: "14px",
+                    color: "#000000",
+                  }}
+                >
+                  {pub.paper_title}
+                </div>
+              )}
+              {(pub.journal_name ||
+                pub.volume_issue ||
+                pub.publication_year) && (
+                <div style={{ fontSize: "14px", color: "#000000" }}>
+                  {[pub.journal_name, pub.volume_issue, pub.publication_year]
+                    .filter(Boolean)
+                    .join(", ")}
+                </div>
+              )}
+              {pub.issn && (
+                <div style={{ fontSize: "14px", color: "#000000" }}>
+                  ISSN: {pub.issn}
+                </div>
+              )}
             </div>
-          )}
+          ))}
         </section>
       )}
 
-      {/* Technical Skills */}
-      {data.technical_skills && Object.keys(data.technical_skills).length > 0 && (
+      {/* Technical Skills - Now using normalized array structure */}
+      {hasTechSkills && (
         <section style={{ marginBottom: "1.5rem" }}>
           <h2
             style={{
@@ -668,23 +685,21 @@ export function ResumeTemplate({ data, className }: ResumeTemplateProps) {
             TECHNICAL SKILLS
           </h2>
           <ResumeTable
-                rows={Object.entries(data.technical_skills).map(
-                  ([category, skills]) => ({
-                    label: category,
-                    value: skills.join(", "),
-                  })
-                )}
-                showHeader={true}
-                labelWidth="35%"
-                valueWidth="65%"
-                headerLabel="Category"
-                headerValue="Skills"
-              />
+            rows={data.technical_skills.map((t) => ({
+              label: t.skill_category,
+              value: (t.skills || []).join(", "),
+            }))}
+            showHeader={true}
+            labelWidth="35%"
+            valueWidth="65%"
+            headerLabel="Category"
+            headerValue="Skills"
+          />
         </section>
       )}
 
-      {/* Languages */}
-      {data.languages && data.languages.length > 0 && (
+      {/* Languages - Now using normalized array structure */}
+      {hasLanguages && (
         <section style={{ marginBottom: "1.5rem" }}>
           <h2
             style={{
@@ -696,13 +711,13 @@ export function ResumeTemplate({ data, className }: ResumeTemplateProps) {
               paddingBottom: "0.25rem",
             }}
           >
-            LANGUAGE
+            LANGUAGES
           </h2>
           <ResumeTable
-            rows={data.languages.map((language) => ({
-              label: language,
+            rows={data.languages.map((l) => ({
+              label: l.language_name,
               value:
-                data.language_proficiency || "[Basic, Intermediate, Advanced]",
+                l.proficiency.charAt(0).toUpperCase() + l.proficiency.slice(1),
             }))}
             showHeader={true}
             labelWidth="35%"

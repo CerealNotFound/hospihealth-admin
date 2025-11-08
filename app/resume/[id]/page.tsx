@@ -9,7 +9,15 @@ export default async function Page({
   const { id } = await params;
   const { data: application, error } = await supabase
     .from("job_applications")
-    .select("*")
+    .select(`
+      *,
+      education:education(*),
+      work_experience:work_experience(*),
+      projects:projects(*),
+      published_papers:published_papers(*),
+      technical_skills:technical_skills(*),
+      languages:languages(*)
+    `)
     .eq("id", id)
     .single();
 

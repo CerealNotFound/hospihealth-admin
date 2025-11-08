@@ -1,5 +1,5 @@
+import { Application } from "@/types/application";
 import { PDFGenerator } from "./generator";
-import { ResumeData } from "@/types/resume";
 
 export class ResumeService {
   private pdfGenerator: PDFGenerator;
@@ -8,40 +8,13 @@ export class ResumeService {
     this.pdfGenerator = new PDFGenerator();
   }
 
-  public async generatePDF(data: ResumeData): Promise<{
+  public async generatePDF(data: Application): Promise<{
     buffer: Buffer;
     cached: boolean;
   }> {
     const cacheKey = data.id;
 
     try {
-      // Check if PDF exists in cache
-      // const exists = await PDFGenerator.checkPDFExists(cacheKey);
-      // if (exists) {
-      //   const pdfUrl = await PDFGenerator.getPDFUrl(cacheKey);
-      //   if (pdfUrl) {
-      //     try {
-      //       const response = await fetch(pdfUrl);
-      //       if (response.ok) {
-      //         const buffer = Buffer.from(await response.arrayBuffer());
-
-      //         // Validate PDF buffer
-      //         if (
-      //           buffer.length > 100 &&
-      //           buffer.toString("ascii", 0, 5).includes("%PDF")
-      //         ) {
-      //           return { buffer, cached: true };
-      //         }
-      //       }
-      //     } catch (fetchError) {
-      //       console.warn(
-      //         `Failed to fetch cached PDF ${cacheKey}, regenerating:`,
-      //         fetchError
-      //       );
-      //       // Continue to generate new PDF
-      //     }
-      //   }
-      // }
 
       // Generate new PDF using applicationId
       console.log(`Generating PDF for application: ${data.id}`);
@@ -73,7 +46,7 @@ export class ResumeService {
   }
 
   public async generateBulkPDFs(
-    applications: ResumeData[],
+    applications: Application[],
     concurrency: number = 5
   ): Promise<{
     buffers: Array<{ id: string; buffer: Buffer }>;

@@ -25,11 +25,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PreviewDialog } from "./PreviewDialog";
 import { ResumeActions } from "./ResumeActions";
-import { Application } from "@/types/application";
+import { ApplicationListItem } from "@/types/application";
 import { RotateCcw } from "lucide-react";
 
 interface ApplicationsTableProps {
-  applications: Application[];
+  applications: ApplicationListItem[];
   onExport: (ids: string[]) => Promise<void>;
   onDeleteRequest?: (id: string) => void;
   onRestoreRequest?: (id: string) => void;

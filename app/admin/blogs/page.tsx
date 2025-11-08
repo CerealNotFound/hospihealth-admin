@@ -22,6 +22,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 
 interface Blog {
   id: string;
@@ -40,16 +49,28 @@ export default function BlogsPage() {
   const [deletingBlogId, setDeletingBlogId] = useState<string | null>(null);
   const [restoringBlogId, setRestoringBlogId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingBlog, setIsLoadingBlog] = useState(false);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(50);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    totalPages: 0,
+  });
+
+  useEffect(() => {
+    fetchBlogs();
+  }, [page]);
 
   const fetchBlogs = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/blogs");
+      const response = await fetch(`/api/blogs?page=${page}&limit=${limit}`);
       if (!response.ok) {
         throw new Error("Failed to fetch blogs");
       }
       const result = await response.json();
-      setBlogs(result.data);
+      setBlogs(result.data || []);
+      setPagination(result.pagination || { total: 0, totalPages: 0 });
     } catch (error) {
       console.error("Error fetching blogs:", error);
     }
@@ -90,9 +111,23 @@ export default function BlogsPage() {
     }
   };
 
-  useEffect(() => {
-    fetchBlogs();
-  }, []);
+  const handleEdit = async (blog: Blog) => {
+    setIsLoadingBlog(true);
+    try {
+      const response = await fetch(`/api/blogs/${blog.id}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch blog details");
+      }
+      const result = await response.json();
+      setEditingBlog(result.data);
+      setIsFormOpen(true);
+    } catch (error) {
+      console.error("Error fetching blog details:", error);
+    } finally {
+      setIsLoadingBlog(false);
+    }
+  };
+
 
   return (
     <div className="w-full max-w-screen-xl mx-auto px-4 md:px-6">
@@ -106,6 +141,7 @@ export default function BlogsPage() {
             setEditingBlog(null);
             setIsFormOpen(true);
           }}
+          disabled={isLoadingBlog}
         >
           <Plus className="w-4 h-4 mr-2" />
           Create Blog
@@ -124,6 +160,7 @@ export default function BlogsPage() {
               setEditingBlog(null);
               setIsFormOpen(true);
             }}
+            disabled={isLoadingBlog}
           >
             <Plus className="w-4 h-4 mr-2" />
             Create Your First Blog
@@ -186,10 +223,8 @@ export default function BlogsPage() {
                       variant="outline"
                       size="sm"
                       className="flex-1"
-                      onClick={() => {
-                        setEditingBlog(blog);
-                        setIsFormOpen(true);
-                      }}
+                      onClick={() => handleEdit(blog)}
+                      disabled={isLoadingBlog}
                     >
                       <Pencil className="w-4 h-4 mr-2" />
                       Edit
@@ -208,6 +243,72 @@ export default function BlogsPage() {
               </CardFooter>
             </Card>
           ))}
+        </div>
+      )}
+
+      {!isLoading && blogs.length > 0 && pagination.totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => page > 1 && setPage(page - 1)}
+                  className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              {(() => {
+                const pages: (number | "ellipsis")[] = [];
+                const totalPages = pagination.totalPages;
+                
+                if (totalPages <= 7) {
+                  for (let i = 1; i <= totalPages; i++) {
+                    pages.push(i);
+                  }
+                } else {
+                  pages.push(1);
+                  if (page > 3) {
+                    pages.push("ellipsis");
+                  }
+                  const start = Math.max(2, page - 1);
+                  const end = Math.min(totalPages - 1, page + 1);
+                  for (let i = start; i <= end; i++) {
+                    pages.push(i);
+                  }
+                  if (page < totalPages - 2) {
+                    pages.push("ellipsis");
+                  }
+                  pages.push(totalPages);
+                }
+                
+                return pages.map((item, idx) => {
+                  if (item === "ellipsis") {
+                    return (
+                      <PaginationItem key={`ellipsis-${idx}`}>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    );
+                  }
+                  return (
+                    <PaginationItem key={item}>
+                      <PaginationLink
+                        onClick={() => setPage(item)}
+                        isActive={item === page}
+                        className="cursor-pointer"
+                      >
+                        {item}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                });
+              })()}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => page < pagination.totalPages && setPage(page + 1)}
+                  className={page === pagination.totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       )}
 

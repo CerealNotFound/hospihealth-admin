@@ -21,10 +21,18 @@ export default async function handler(
       return res.status(400).json({ error: "Invalid application ID" });
     }
 
-    // Fetch application data
+    // Fetch application data with all nested relations
     const { data: application, error: fetchError } = await supabase
       .from("job_applications")
-      .select("*")
+      .select(`
+        *,
+        education:education(*),
+        work_experience:work_experience(*),
+        projects:projects(*),
+        published_papers:published_papers(*),
+        technical_skills:technical_skills(*),
+        languages:languages(*)
+      `)
       .eq("id", id)
       .single();
 
