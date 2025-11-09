@@ -5,6 +5,8 @@ import {
   Loader2,
   Filter,
   ArrowDownWideNarrow,
+  FileText,
+  ChevronDown,
 } from "lucide-react";
 import {
   Table,
@@ -31,6 +33,7 @@ import { RotateCcw } from "lucide-react";
 interface ApplicationsTableProps {
   applications: ApplicationListItem[];
   onExport: (ids: string[]) => Promise<void>;
+  onExportCSV?: (ids: string[]) => Promise<void>;
   onDeleteRequest?: (id: string) => void;
   onRestoreRequest?: (id: string) => void;
 }
@@ -38,6 +41,7 @@ interface ApplicationsTableProps {
 export function ApplicationsTable({
   applications,
   onExport,
+  onExportCSV,
   onDeleteRequest,
   onRestoreRequest,
 }: ApplicationsTableProps) {
@@ -87,6 +91,20 @@ export function ApplicationsTable({
     try {
       await onExport(selectedApplications);
       setSelectedApplications([]);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportCSV = async () => {
+    if (selectedApplications.length === 0) return;
+
+    setIsExporting(true);
+    try {
+      if (onExportCSV) {
+        await onExportCSV(selectedApplications);
+        setSelectedApplications([]);
+      }
     } finally {
       setIsExporting(false);
     }
@@ -183,30 +201,54 @@ export function ApplicationsTable({
             </Button>
 
             {selectedApplications.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleExport}
-                disabled={isExporting}
-                className="flex-shrink-0"
-              >
-                {isExporting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                    <span className="hidden xs:inline">Exporting...</span>
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-4 h-4 mr-1" />
-                    <span className="hidden xs:inline">
-                      Export ({selectedApplications.length})
-                    </span>
-                    <span className="xs:hidden">
-                      {selectedApplications.length}
-                    </span>
-                  </>
-                )}
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isExporting}
+                    className="flex-shrink-0"
+                  >
+                    {isExporting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                        <span className="hidden xs:inline">Exporting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4 mr-1" />
+                        <span className="hidden xs:inline">
+                          Export ({selectedApplications.length})
+                        </span>
+                        <span className="xs:hidden">
+                          {selectedApplications.length}
+                        </span>
+                        <ChevronDown className="w-4 h-4 ml-1" />
+                      </>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Export Format</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={handleExport}
+                    disabled={isExporting}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Export as ZIP
+                  </DropdownMenuItem>
+                  {onExportCSV && (
+                    <DropdownMenuItem
+                      onClick={handleExportCSV}
+                      disabled={isExporting}
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Export as CSV
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </div>

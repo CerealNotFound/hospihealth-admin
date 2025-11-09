@@ -150,6 +150,44 @@ export default function ApplicationsPage() {
     }
   };
 
+  const handleBulkExportCSV = async (ids: string[]) => {
+    try {
+      const response = await fetch("/api/applications/export-csv", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ids }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to export CSV");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "applications.csv";
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Success",
+        description: `Successfully exported ${ids.length} applications as CSV`,
+      });
+    } catch (error) {
+      console.error("Error exporting CSV:", error);
+      toast({
+        title: "Error",
+        description: "Failed to export CSV",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-w-0 w-full">
       <div className="flex justify-between items-start mb-6 gap-3">
@@ -196,6 +234,7 @@ export default function ApplicationsPage() {
           <ApplicationsTable
             applications={applications}
             onExport={handleBulkExport}
+            onExportCSV={handleBulkExportCSV}
             onDeleteRequest={(id) => setDeletingApplicationId(id)}
             onRestoreRequest={(id) => setRestoringApplicationId(id)}
           />
