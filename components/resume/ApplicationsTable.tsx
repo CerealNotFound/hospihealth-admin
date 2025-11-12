@@ -154,7 +154,7 @@ export function ApplicationsTable({
               }
               onClick={toggleAll}
             />
-            <span className="text-sm text-gray-600 whitespace-nowrap">
+            <span className="text-sm text-[rgba(0,0,0,0.7)] whitespace-nowrap">
               {selectedApplications.length} selected
             </span>
           </div>
@@ -254,7 +254,7 @@ export function ApplicationsTable({
         </div>
       )}
 
-      <div className="w-full overflow-x-auto rounded-md border bg-white">
+      <div className="w-full overflow-x-auto rounded-md border border-[#FCF3F3] bg-white shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
@@ -282,7 +282,7 @@ export function ApplicationsTable({
               <TableRow>
                 <TableCell
                   colSpan={7}
-                  className="text-center py-8 text-gray-500"
+                  className="text-center py-8 text-[rgba(0,0,0,0.7)]"
                 >
                   No applications found
                 </TableCell>
@@ -291,7 +291,9 @@ export function ApplicationsTable({
               displayedApplications.map((application) => (
                 <TableRow
                   key={application.id}
-                  className={application.is_deleted ? "opacity-60 bg-red-50" : ""}
+                  className={
+                    application.is_deleted ? "opacity-60 bg-[#FCF3F3]" : ""
+                  }
                 >
                   <TableCell>
                     <div className="flex items-center gap-2 min-w-0">
@@ -328,7 +330,7 @@ export function ApplicationsTable({
                         <Button
                           variant="outline"
                           size="sm"
-                          className="text-green-600 hover:text-green-700"
+                          className="text-[#DBA622] hover:text-[#c8951f]"
                           onClick={() =>
                             onRestoreRequest
                               ? onRestoreRequest(application.id)

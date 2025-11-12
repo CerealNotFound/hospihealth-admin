@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/supabase/server";
 import { makeExcerpt } from "@/lib/utils";
 
 // GET /api/blogs - Fetch all blogs (minimal fields for list view)
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "50", 10);
@@ -50,6 +51,7 @@ export async function GET(request: NextRequest) {
 // POST /api/blogs - Create new blog
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const contentType = request.headers.get("content-type") || "";
 
     // Handle multipart form submissions (preferred)

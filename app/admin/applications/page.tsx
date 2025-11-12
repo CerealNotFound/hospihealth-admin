@@ -38,8 +38,12 @@ export default function ApplicationsPage() {
     string | null
   >(null);
   const { toast } = useToast();
-  const [deletingApplicationId, setDeletingApplicationId] = useState<string | null>(null);
-  const [restoringApplicationId, setRestoringApplicationId] = useState<string | null>(null);
+  const [deletingApplicationId, setDeletingApplicationId] = useState<
+    string | null
+  >(null);
+  const [restoringApplicationId, setRestoringApplicationId] = useState<
+    string | null
+  >(null);
   const [page, setPage] = useState(1);
   const [limit] = useState(50);
   const [pagination, setPagination] = useState({
@@ -54,7 +58,9 @@ export default function ApplicationsPage() {
   const fetchApplications = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/applications?page=${page}&limit=${limit}`);
+      const response = await fetch(
+        `/api/applications?page=${page}&limit=${limit}`
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch applications");
       }
@@ -192,10 +198,10 @@ export default function ApplicationsPage() {
     <div className="min-w-0 w-full">
       <div className="flex justify-between items-start mb-6 gap-3">
         <div className="min-w-0 flex-shrink">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 truncate">
+          <h1 className="text-2xl md:text-3xl font-bold text-[#2e0101] truncate">
             Job Applications
           </h1>
-          <p className="text-gray-600 mt-1 text-sm md:text-base">
+          <p className="text-[rgba(0,0,0,0.7)] mt-1 text-sm md:text-base">
             Manage job applications
           </p>
         </div>
@@ -204,7 +210,7 @@ export default function ApplicationsPage() {
             setEditingApplication(null);
             setIsFormOpen(true);
           }}
-          className="flex-shrink-0"
+          className="flex-shrink-0 bg-[#DBA622] hover:bg-[#c8951f] text-white"
         >
           <Plus className="w-4 h-4 mr-2" />
           <span className="hidden sm:inline">Add Application</span>
@@ -214,16 +220,17 @@ export default function ApplicationsPage() {
 
       {isLoading ? (
         <div className="text-center py-12">
-          <p className="text-gray-500">Loading applications...</p>
+          <p className="text-[rgba(0,0,0,0.7)]">Loading applications...</p>
         </div>
       ) : applications.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 md:p-12 text-center">
-          <p className="text-gray-500 mb-4">No applications found</p>
+        <div className="bg-white rounded-lg shadow-sm border border-[#FCF3F3] p-8 md:p-12 text-center">
+          <p className="text-[rgba(0,0,0,0.7)] mb-4">No applications found</p>
           <Button
             onClick={() => {
               setEditingApplication(null);
               setIsFormOpen(true);
             }}
+            className="bg-[#DBA622] hover:bg-[#c8951f] text-white"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Your First Application
@@ -251,13 +258,17 @@ export default function ApplicationsPage() {
                   <PaginationItem>
                     <PaginationPrevious
                       onClick={() => page > 1 && setPage(page - 1)}
-                      className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      className={
+                        page === 1
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
                     />
                   </PaginationItem>
                   {(() => {
                     const pages: (number | "ellipsis")[] = [];
                     const totalPages = pagination.totalPages;
-                    
+
                     if (totalPages <= 7) {
                       // Show all pages if 7 or fewer
                       for (let i = 1; i <= totalPages; i++) {
@@ -266,26 +277,26 @@ export default function ApplicationsPage() {
                     } else {
                       // Always show first page
                       pages.push(1);
-                      
+
                       if (page > 3) {
                         pages.push("ellipsis");
                       }
-                      
+
                       // Show pages around current page
                       const start = Math.max(2, page - 1);
                       const end = Math.min(totalPages - 1, page + 1);
                       for (let i = start; i <= end; i++) {
                         pages.push(i);
                       }
-                      
+
                       if (page < totalPages - 2) {
                         pages.push("ellipsis");
                       }
-                      
+
                       // Always show last page
                       pages.push(totalPages);
                     }
-                    
+
                     return pages.map((item, idx) => {
                       if (item === "ellipsis") {
                         return (
@@ -309,8 +320,14 @@ export default function ApplicationsPage() {
                   })()}
                   <PaginationItem>
                     <PaginationNext
-                      onClick={() => page < pagination.totalPages && setPage(page + 1)}
-                      className={page === pagination.totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      onClick={() =>
+                        page < pagination.totalPages && setPage(page + 1)
+                      }
+                      className={
+                        page === pagination.totalPages
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
                     />
                   </PaginationItem>
                 </PaginationContent>
@@ -339,7 +356,8 @@ export default function ApplicationsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will soft-delete the application. You can restore it later if needed.
+              This will soft-delete the application. You can restore it later if
+              needed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -348,6 +366,7 @@ export default function ApplicationsPage() {
               onClick={() =>
                 deletingApplicationId && handleDelete(deletingApplicationId)
               }
+              className="bg-[#bb0b0b] hover:bg-[#a00a0a] text-white"
             >
               Delete
             </AlertDialogAction>
@@ -363,7 +382,8 @@ export default function ApplicationsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Restore Application?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will restore the deleted application and make it available again.
+              This will restore the deleted application and make it available
+              again.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -372,7 +392,7 @@ export default function ApplicationsPage() {
               onClick={() =>
                 restoringApplicationId && handleRestore(restoringApplicationId)
               }
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-[#DBA622] hover:bg-[#c8951f] text-white"
             >
               Restore
             </AlertDialogAction>

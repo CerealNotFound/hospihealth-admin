@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/supabase/server";
 
 // GET /api/jobs/[id] - Fetch complete job record
 export async function GET(
@@ -7,6 +7,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
     const { id } = await params;
 
     const { data, error } = await supabase
@@ -39,6 +40,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
     const body = await request.json();
     const { id } = await params;
 
@@ -68,6 +70,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
     const { id } = await params;
 
     const { data, error } = await supabase

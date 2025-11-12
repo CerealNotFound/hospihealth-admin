@@ -133,13 +133,14 @@ export default function JobsPage() {
     }
   };
 
-
   return (
     <div className="w-full max-w-screen-xl mx-auto py-4 md:py-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Jobs</h1>
-          <p className="text-gray-600 mt-1">Manage job postings</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-[#2e0101]">
+            Jobs
+          </h1>
+          <p className="text-[rgba(0,0,0,0.7)] mt-1">Manage job postings</p>
         </div>
         <Button
           onClick={() => {
@@ -147,6 +148,7 @@ export default function JobsPage() {
             setIsFormOpen(true);
           }}
           disabled={isLoadingJob}
+          className="bg-[#DBA622] hover:bg-[#c8951f] text-white"
         >
           <Plus className="w-4 h-4 mr-2" />
           Create Job
@@ -155,24 +157,25 @@ export default function JobsPage() {
 
       {isLoading ? (
         <div className="text-center py-12">
-          <p className="text-gray-500">Loading jobs...</p>
+          <p className="text-[rgba(0,0,0,0.7)]">Loading jobs...</p>
         </div>
       ) : jobs.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-          <p className="text-gray-500 mb-4">No jobs found</p>
+        <div className="bg-white rounded-lg shadow-sm border border-[#FCF3F3] p-12 text-center">
+          <p className="text-[rgba(0,0,0,0.7)] mb-4">No jobs found</p>
           <Button
             onClick={() => {
               setEditingJob(null);
               setIsFormOpen(true);
             }}
             disabled={isLoadingJob}
+            className="bg-[#DBA622] hover:bg-[#c8951f] text-white"
           >
             <Plus className="w-4 h-4 mr-2" />
             Create Your First Job
           </Button>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-auto pl-4">
+        <div className="bg-white rounded-lg shadow-sm border border-[#FCF3F3] overflow-auto pl-4">
           <div className="-mx-4 md:mx-0 overflow-x-auto">
             <Table>
               <TableHeader>
@@ -194,13 +197,13 @@ export default function JobsPage() {
                 {jobs.map((job) => (
                   <TableRow
                     key={job.id}
-                    className={job.is_deleted ? "opacity-60 bg-red-50" : ""}
+                    className={job.is_deleted ? "opacity-60 bg-[#FCF3F3]" : ""}
                   >
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
                         {job.job_title}
                         {job.is_deleted && (
-                          <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
+                          <span className="text-xs bg-[#FCF3F3] text-[#bb0b0b] px-2 py-1 rounded">
                             Deleted
                           </span>
                         )}
@@ -229,7 +232,7 @@ export default function JobsPage() {
                           <RotateCcw className="w-4 h-4" />
                         </Button>
                       ) : (
-                        <>
+                        <div className="flex gap-2">
                           <Button
                             variant="outline"
                             size="sm"
@@ -242,10 +245,11 @@ export default function JobsPage() {
                             variant="destructive"
                             size="sm"
                             onClick={() => setDeletingJobId(job.id)}
+                            className="bg-[#bb0b0b] hover:bg-[#a00a0a] text-white"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
-                        </>
+                        </div>
                       )}
                     </TableCell>
                   </TableRow>
@@ -263,13 +267,17 @@ export default function JobsPage() {
               <PaginationItem>
                 <PaginationPrevious
                   onClick={() => page > 1 && setPage(page - 1)}
-                  className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  className={
+                    page === 1
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
                 />
               </PaginationItem>
               {(() => {
                 const pages: (number | "ellipsis")[] = [];
                 const totalPages = pagination.totalPages;
-                
+
                 if (totalPages <= 7) {
                   for (let i = 1; i <= totalPages; i++) {
                     pages.push(i);
@@ -289,7 +297,7 @@ export default function JobsPage() {
                   }
                   pages.push(totalPages);
                 }
-                
+
                 return pages.map((item, idx) => {
                   if (item === "ellipsis") {
                     return (
@@ -313,8 +321,14 @@ export default function JobsPage() {
               })()}
               <PaginationItem>
                 <PaginationNext
-                  onClick={() => page < pagination.totalPages && setPage(page + 1)}
-                  className={page === pagination.totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  onClick={() =>
+                    page < pagination.totalPages && setPage(page + 1)
+                  }
+                  className={
+                    page === pagination.totalPages
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
                 />
               </PaginationItem>
             </PaginationContent>
@@ -348,6 +362,7 @@ export default function JobsPage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deletingJobId && handleDelete(deletingJobId)}
+              className="bg-[#bb0b0b] hover:bg-[#a00a0a] text-white"
             >
               Delete
             </AlertDialogAction>
@@ -370,7 +385,7 @@ export default function JobsPage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => restoringJobId && handleRestore(restoringJobId)}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-[#DBA622] hover:bg-[#c8951f] text-white"
             >
               Restore
             </AlertDialogAction>

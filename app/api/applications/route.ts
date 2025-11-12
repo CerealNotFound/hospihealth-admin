@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/supabase/server";
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "50", 10);
@@ -45,6 +46,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const body = await request.json();
 
     // 1️⃣ Insert base application first

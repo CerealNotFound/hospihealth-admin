@@ -60,6 +60,15 @@ const config: Config = {
           '4': 'hsl(var(--chart-4))',
           '5': 'hsl(var(--chart-5))',
         },
+        hospihealth: {
+          text: 'rgba(0, 0, 0, 0.7)',
+          'text-dark': '#000',
+          'text-light': '#fff',
+          heading: '#2e0101',
+          gold: '#DBA622',
+          red: '#bb0b0b',
+          'light-bg': '#FCF3F3',
+        },
       },
       keyframes: {
         'accordion-down': {

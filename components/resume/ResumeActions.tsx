@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Eye, FileText, Trash } from "lucide-react";
+import { Download, Eye, Trash } from "lucide-react";
 
 interface ResumeActionsProps {
   onPreview: () => void;
@@ -19,6 +19,7 @@ export function ResumeActions({
         size="icon"
         onClick={onPreview}
         title="Preview Resume"
+        className="hover:text-[#2e0101] hover:bg-[#FCF3F3]"
       >
         <Eye className="w-4 h-4" />
       </Button>
@@ -27,14 +28,16 @@ export function ResumeActions({
         size="icon"
         onClick={onDownload}
         title="Download PDF"
+        className="hover:text-[#DBA622] hover:bg-[#FCF3F3]"
       >
-        <FileText className="w-4 h-4" />
+        <Download className="w-4 h-4" />
       </Button>
       <Button
         variant="ghost"
         size="icon"
         onClick={onDelete}
         title="Delete Application"
+        className="hover:text-[#bb0b0b] hover:bg-[#FCF3F3]"
       >
         <Trash className="w-4 h-4" />
       </Button>

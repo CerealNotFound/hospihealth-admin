@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/supabase/server";
 import { resumeService } from "@/lib/pdf/service";
 
 // GET /api/applications/[id]/pdf - Get PDF version of a resume
@@ -8,6 +8,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
     const { id } = await params;
     const { data: application, error } = await supabase
       .from("job_applications")

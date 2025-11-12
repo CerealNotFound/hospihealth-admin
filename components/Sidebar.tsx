@@ -14,7 +14,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-full md:w-64 bg-white border-r border-gray-200 md:min-h-screen p-4">
+    <aside className="w-full md:w-64 bg-white border-r border-[#FCF3F3] md:min-h-screen p-4">
       <ul className="space-y-2">
         {modules.map((module) => {
           const Icon = module.icon;
@@ -24,10 +24,10 @@ export function Sidebar() {
             <li key={module.path}>
               <Link
                 href={module.path}
-                className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
                   isActive
-                    ? "bg-blue-50 text-blue-700 font-medium"
-                    : "text-gray-700 hover:bg-gray-100"
+                    ? "bg-[#FCF3F3] text-[#2e0101] font-semibold shadow-sm"
+                    : "text-[rgba(0,0,0,0.7)] hover:bg-[#FCF3F3] hover:text-[#2e0101]"
                 }`}
               >
                 <Icon className="w-5 h-5" />

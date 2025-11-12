@@ -14,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen w-screen overflow-x-hidden bg-gray-50">
+    <div className="min-h-screen w-screen overflow-x-hidden">
       <Navbar />
       <div className="flex w-full">
         <aside className="hidden md:flex md:w-64 md:flex-shrink-0">

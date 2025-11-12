@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/supabase/server";
 import { makeExcerpt } from "@/lib/utils";
 
 // GET /api/blogs/[id] - Fetch complete blog record
@@ -8,6 +8,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
     const { id } = await params;
 
     const { data, error } = await supabase
@@ -41,7 +42,7 @@ export async function GET(
 }
 
 // DELETE image from storage bucket
-async function deleteImageFromStorage(imageUrl: string) {
+async function deleteImageFromStorage(imageUrl: string, supabase: any) {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     if (!baseUrl) return false;
@@ -68,6 +69,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
     const { id } = await params;
     const contentType = request.headers.get("content-type") || "";
 
@@ -84,7 +86,7 @@ export async function PUT(
       if (deletedImages.length > 0) {
         await Promise.all(
           deletedImages.map(async (img: { src: string }) => {
-            await deleteImageFromStorage(img.src);
+            await deleteImageFromStorage(img.src, supabase);
           })
         );
       }
@@ -177,6 +179,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
     const { id } = await params;
 
     const { data, error } = await supabase

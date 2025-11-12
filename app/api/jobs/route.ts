@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/supabase/server";
 
 // GET /api/jobs - Fetch all jobs (minimal fields for list view)
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "50", 10);
@@ -13,9 +14,12 @@ export async function GET(request: NextRequest) {
     // Fetch only minimal fields needed for table display
     const { data, error, count } = await supabase
       .from("jobs")
-      .select("id, job_title, openings, experience_required, created_at, is_deleted", {
-        count: "exact",
-      })
+      .select(
+        "id, job_title, openings, experience_required, created_at, is_deleted",
+        {
+          count: "exact",
+        }
+      )
       .order("created_at", { ascending: false })
       .range(start, end);
 
@@ -43,6 +47,7 @@ export async function GET(request: NextRequest) {
 // POST /api/jobs - Create new job
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const body = await request.json();
 
     const { data, error } = await supabase

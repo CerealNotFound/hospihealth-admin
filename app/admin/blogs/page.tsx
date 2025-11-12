@@ -133,8 +133,8 @@ export default function BlogsPage() {
     <div className="w-full max-w-screen-xl mx-auto px-4 md:px-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Blogs</h1>
-          <p className="text-gray-600 mt-1">Manage blog posts</p>
+          <h1 className="text-3xl font-bold text-[#2e0101]">Blogs</h1>
+          <p className="text-[rgba(0,0,0,0.7)] mt-1">Manage blog posts</p>
         </div>
         <Button
           onClick={() => {
@@ -142,6 +142,7 @@ export default function BlogsPage() {
             setIsFormOpen(true);
           }}
           disabled={isLoadingBlog}
+          className="bg-[#DBA622] hover:bg-[#c8951f] text-white"
         >
           <Plus className="w-4 h-4 mr-2" />
           Create Blog
@@ -150,17 +151,18 @@ export default function BlogsPage() {
 
       {isLoading ? (
         <div className="text-center py-12">
-          <p className="text-gray-500">Loading blogs...</p>
+          <p className="text-[rgba(0,0,0,0.7)]">Loading blogs...</p>
         </div>
       ) : blogs.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-          <p className="text-gray-500 mb-4">No blogs found</p>
+        <div className="bg-white rounded-lg shadow-sm border border-[#FCF3F3] p-12 text-center">
+          <p className="text-[rgba(0,0,0,0.7)] mb-4">No blogs found</p>
           <Button
             onClick={() => {
               setEditingBlog(null);
               setIsFormOpen(true);
             }}
             disabled={isLoadingBlog}
+            className="bg-[#DBA622] hover:bg-[#c8951f] text-white"
           >
             <Plus className="w-4 h-4 mr-2" />
             Create Your First Blog
@@ -172,7 +174,7 @@ export default function BlogsPage() {
             <Card
               key={blog.id}
               className={`flex flex-col ${
-                blog.is_deleted ? "opacity-60 bg-red-50" : ""
+                blog.is_deleted ? "opacity-60 bg-[#FCF3F3]" : ""
               }`}
             >
               <CardHeader>
@@ -180,7 +182,7 @@ export default function BlogsPage() {
                   <div className="flex items-center gap-2">
                     {blog.title}
                     {blog.is_deleted && (
-                      <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
+                      <span className="text-xs bg-[#FCF3F3] text-[#bb0b0b] px-2 py-1 rounded">
                         Deleted
                       </span>
                     )}
@@ -191,7 +193,7 @@ export default function BlogsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-1">
-                <p className="text-sm text-gray-600 line-clamp-3">
+                <p className="text-sm text-[rgba(0,0,0,0.7)] line-clamp-3">
                   {blog.excerpt || "No content"}
                 </p>
                 {blog.images &&
@@ -232,7 +234,7 @@ export default function BlogsPage() {
                     <Button
                       variant="destructive"
                       size="sm"
-                      className="flex-1"
+                      className="flex-1 bg-[#bb0b0b] hover:bg-[#a00a0a] text-white"
                       onClick={() => setDeletingBlogId(blog.id)}
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
@@ -315,8 +317,12 @@ export default function BlogsPage() {
       {isFormOpen && (
         <BlogForm
           blog={editingBlog}
-          onClose={() => setIsFormOpen(false)}
+          onClose={() => {
+            setEditingBlog(null);
+            setIsFormOpen(false);
+          }}
           onSuccess={() => {
+            setEditingBlog(null);
             fetchBlogs();
             setIsFormOpen(false);
           }}
@@ -339,6 +345,7 @@ export default function BlogsPage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deletingBlogId && handleDelete(deletingBlogId)}
+              className="bg-[#bb0b0b] hover:bg-[#a00a0a] text-white"
             >
               Delete
             </AlertDialogAction>
@@ -362,7 +369,7 @@ export default function BlogsPage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => restoringBlogId && handleRestore(restoringBlogId)}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-[#DBA622] hover:bg-[#c8951f] text-white"
             >
               Restore
             </AlertDialogAction>

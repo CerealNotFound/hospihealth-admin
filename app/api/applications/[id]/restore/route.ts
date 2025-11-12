@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/supabase/server";
 
 // POST /api/applications/[id]/restore - Restore soft-deleted application
 export async function POST(
@@ -7,6 +7,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
     const { id } = await params;
 
     const { data, error } = await supabase

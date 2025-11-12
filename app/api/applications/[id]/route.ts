@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/supabase/server";
 
 // GET /api/applications/[id] - Fetch complete application with all nested relations
 export async function GET(
@@ -7,11 +7,13 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
     const { id } = await params;
 
     const { data, error } = await supabase
       .from("job_applications")
-      .select(`
+      .select(
+        `
         *,
         education:education(*),
         work_experience:work_experience(*),
@@ -19,7 +21,8 @@ export async function GET(
         published_papers:published_papers(*),
         technical_skills:technical_skills(*),
         languages:languages(*)
-      `)
+      `
+      )
       .eq("id", id)
       .single();
 
@@ -28,7 +31,10 @@ export async function GET(
     }
 
     if (!data) {
-      return NextResponse.json({ error: "Application not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Application not found" },
+        { status: 404 }
+      );
     }
 
     // Restructure data to ensure nested arrays exist cleanly
@@ -58,6 +64,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
     const body = await request.json();
     const { id } = await params;
 
@@ -87,6 +94,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
     const { id } = await params;
 
     const { data, error } = await supabase
