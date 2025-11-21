@@ -8,7 +8,16 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "50", 10);
+    const limit = parseInt(searchParams.get("limit") || "10", 10);
+
+    // Validate pagination parameters
+    if (page < 1 || limit < 1 || limit > 100) {
+      return NextResponse.json(
+        { error: "Invalid pagination parameters" },
+        { status: 400 }
+      );
+    }
+
     const start = (page - 1) * limit;
     const end = start + limit - 1;
 
@@ -31,13 +40,18 @@ export async function GET(request: NextRequest) {
       excerpt: blog.excerpt || "",
     }));
 
+    const totalCount = count || 0;
+    const totalPages = Math.ceil(totalCount / limit);
+
     return NextResponse.json({
       data: blogsWithExcerpt,
       pagination: {
         page,
         limit,
-        total: count || 0,
-        totalPages: Math.ceil((count || 0) / limit),
+        totalCount,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
       },
     });
   } catch (error) {

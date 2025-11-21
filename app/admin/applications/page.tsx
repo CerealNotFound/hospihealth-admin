@@ -45,9 +45,9 @@ export default function ApplicationsPage() {
     string | null
   >(null);
   const [page, setPage] = useState(1);
-  const [limit] = useState(50);
+  const [limit] = useState(10);
   const [pagination, setPagination] = useState({
-    total: 0,
+    totalCount: 0,
     totalPages: 0,
   });
 
